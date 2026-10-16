@@ -21,4 +21,5 @@ from weather import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.weather_view, name='weather'),
+    path('api/weather/', views.weather_by_coords, name='weather_by_coords'),
 ]
