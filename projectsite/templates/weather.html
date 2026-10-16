@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Weather Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; text-align: center; }
+    img { max-width: 80%; border-radius: 10px; margin-top: 1em; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Weather Dashboard</h1>
+  <form method="get">
+    <input type="text" name="city" placeholder="Enter city name" value="{{ city }}" />
+    <button type="submit">Search</button>
+  </form>
+
+  {% if weather.error %}
+    <p class="error">{{ weather.error }}</p>
+    {% if weather.details %}
+      <pre>{{ weather.details }}</pre>
+    {% endif %}
+  {% else %}
+    <h2>{{ weather.city }}, {{ weather.country }}</h2>
+    <p><img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="icon" /></p>
+    <p><strong>{{ weather.temp }} °C</strong></p>
+    <p>{{ weather.description }}</p>
+  {% endif %}
+</body>
+</html>
