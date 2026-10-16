@@ -65,3 +65,6 @@ def weather_by_coords(request):
         return JsonResponse({"error": "Failed to fetch weather data", "details": str(e)}, status=502)
     except KeyError:
         return JsonResponse({"error": "No weather info for that spot."}, status=404)
+
+def map_view(request):
+    return render(request, "map.html")

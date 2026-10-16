@@ -7,6 +7,16 @@
     body { font-family: Arial, sans-serif; margin: 2em; text-align: center; }
     img { max-width: 80%; border-radius: 10px; margin-top: 1em; }
     .error { color: red; }
+
+    .map-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background: #2563eb;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+}
+.map-btn:hover { background: #1d4ed8; }
   </style>
 </head>
 <body>
@@ -15,7 +25,7 @@
     <input type="text" name="city" placeholder="Enter city name" value="{{ city }}" />
     <button type="submit">Search</button>
   </form>
-
+<p><a href="{% url 'map' %}" class="map-btn">🌍 Open Weather Map</a></p>
   {% if weather.error %}
     <p class="error">{{ weather.error }}</p>
     {% if weather.details %}
