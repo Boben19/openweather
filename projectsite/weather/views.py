@@ -5,7 +5,13 @@ import requests
 
 def weather_view(request):
     api_key = os.getenv("OPENWEATHER_API_KEY")
-    city = request.GET.get("city", "Puerto Princesa")
+    city = request.GET.get("city", "").strip()
+
+    if not city:
+        return render(request, "weather.html", {
+        "weather": {"error": "Please enter a city name."},
+        "city": "",
+    })
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
 
     try:
