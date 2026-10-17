@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DexTHER</title>
+  <link rel="stylesheet" href="{% static 'weather/style.css' %}" />
+</head>
+<body>
+  <h1>DexTHER</h1>
+
+  <form method="get">
+    <input type="text" name="city" placeholder="Enter city name" value="{{ city }}" />
+    <input type="hidden" name="units" value="{{ units }}" />
+    <button type="submit">Search</button>
+  </form>
+
+  <p class="units">
+    <a href="?city={{ city|urlencode }}&amp;units=metric" {% if units == 'metric' %}class="active"{% endif %}>°C</a> |
+    <a href="?city={{ city|urlencode }}&amp;units=imperial" {% if units == 'imperial' %}class="active"{% endif %}>°F</a>
+  </p>
+
+  {% if error %}
+    <p class="error">{{ error }}</p>
+  {% elif weather %}
+    <div class="card">
+      <h2>{{ weather.city }}, {{ weather.country }}</h2>
+      <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="{{ weather.description }}" />
+      <p class="temp">{{ weather.temp }} {{ temp_unit }}</p>
+      <p>{{ weather.description }}</p>
+      <p class="small">Feels like {{ weather.feels_like }} {{ temp_unit }}</p>
+      <p class="small">Humidity: {{ weather.humidity }}% &nbsp;|&nbsp; Wind: {{ weather.wind }} {{ wind_unit }}</p>
+    </div>
+
+    {% if forecast %}
+      <h3>5-day forecast</h3>
+      <div class="forecast">
+        {% for day in forecast %}
+          <div class="day">
+            <strong>{{ day.day }}</strong>
+            <span class="small">{{ day.date }}</span>
+            <img src="https://openweathermap.org/img/wn/{{ day.icon }}.png" alt="{{ day.description }}" />
+            <span>{{ day.temp }}{{ temp_unit }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endif %}
+</body>
+</html>

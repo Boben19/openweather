@@ -1,0 +1,198 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="DexTHER: Whether you asked or not, Dex has the forecast. Current weather, hourly and 5-day forecasts.">
+  <title>{% if report %}{{ report.current.temp }}{{ unit_labels.temp }} in {{ report.location.label }} · {% endif %}DexTHER</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%231b7f55'/%3E%3Cpath d='M23 8.5C14.5 8.4 9 11.4 9 17.6c0 3.6 2.5 6 5.7 6 6.6 0 9.2-7.200 8.300-15.100Z' fill='%23fff'/%3E%3C/svg%3E">
+  <script src="{% static 'weather/theme-init.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'weather/style.css' %}">
+</head>
+<body>
+  <a class="skip-link" href="#dashboard">Skip to the weather</a>
+
+  <svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0">
+    <defs>
+      <path id="cloud" d="M17 46a8 8 0 0 1 1.2-15.900A12 12 0 0 1 41 27a9.500 9.500 0 0 1 6 19Z"/>
+      <g id="sun-core"><circle cx="32" cy="32" r="10"/><g stroke-width="3.500" stroke-linecap="round" fill="none"><path d="M32 10v5M32 49v5M10 32h5M49 32h5M16.500 16.500l3.500 3.500M44 44l3.500 3.500M16.500 47.500 20 44M44 20l3.500-3.500"/></g></g>
+      <path id="moon-core" d="M40 10a22 22 0 1 0 14 38A18 18 0 0 1 40 10Z"/>
+      <g id="rain-lines" stroke-width="3.500" stroke-linecap="round" fill="none"><path d="M22 52l-2 6M32 52l-2 6M42 52l-2 6"/></g>
+    </defs>
+    <symbol id="i-01d" viewBox="0 0 64 64"><use href="#sun-core" class="ic-sun" stroke="var(--ic-sun)" fill="var(--ic-sun)"/></symbol>
+    <symbol id="i-01n" viewBox="0 0 64 64"><use href="#moon-core" fill="var(--ic-moon)"/></symbol>
+    <symbol id="i-02d" viewBox="0 0 64 64"><g transform="translate(-6 -8) scale(.8)"><use href="#sun-core" stroke="var(--ic-sun)" fill="var(--ic-sun)"/></g><use href="#cloud" fill="var(--ic-cloud)" transform="translate(6 2)"/></symbol>
+    <symbol id="i-02n" viewBox="0 0 64 64"><g transform="translate(-8 -10) scale(.75)"><use href="#moon-core" fill="var(--ic-moon)"/></g><use href="#cloud" fill="var(--ic-cloud)" transform="translate(6 2)"/></symbol>
+    <symbol id="i-03" viewBox="0 0 64 64"><use href="#cloud" fill="var(--ic-cloud)" transform="translate(0 2)"/></symbol>
+    <symbol id="i-04" viewBox="0 0 64 64"><use href="#cloud" fill="var(--ic-cloud-back)" transform="translate(8 -8) scale(.85)"/><use href="#cloud" fill="var(--ic-cloud)" transform="translate(0 4)"/></symbol>
+    <symbol id="i-09" viewBox="0 0 64 64"><use href="#cloud" fill="var(--ic-cloud-back)" transform="translate(0 -4)"/><use href="#rain-lines" stroke="var(--ic-rain)"/></symbol>
+    <symbol id="i-10d" viewBox="0 0 64 64"><g transform="translate(-8 -12) scale(.7)"><use href="#sun-core" stroke="var(--ic-sun)" fill="var(--ic-sun)"/></g><use href="#cloud" fill="var(--ic-cloud-back)" transform="translate(6 -4)"/><use href="#rain-lines" stroke="var(--ic-rain)"/></symbol>
+    <symbol id="i-10n" viewBox="0 0 64 64"><g transform="translate(-8 -12) scale(.7)"><use href="#moon-core" fill="var(--ic-moon)"/></g><use href="#cloud" fill="var(--ic-cloud-back)" transform="translate(6 -4)"/><use href="#rain-lines" stroke="var(--ic-rain)"/></symbol>
+    <symbol id="i-11" viewBox="0 0 64 64"><use href="#cloud" fill="var(--ic-cloud-back)" transform="translate(0 -6)"/><path d="M34 38 25 50h7l-3 10 11-14h-7l4-8Z" fill="var(--ic-sun)"/></symbol>
+    <symbol id="i-13" viewBox="0 0 64 64"><use href="#cloud" fill="var(--ic-cloud-back)" transform="translate(0 -6)"/><g fill="var(--ic-snow)"><circle cx="22" cy="53" r="3"/><circle cx="32" cy="58" r="3"/><circle cx="42" cy="53" r="3"/></g></symbol>
+    <symbol id="i-50" viewBox="0 0 64 64"><g stroke="var(--ic-cloud)" stroke-width="4" stroke-linecap="round" fill="none"><path d="M14 22h30M20 32h32M14 42h26M24 52h24"/></g></symbol>
+  </svg>
+
+  <div class="backdrop" aria-hidden="true"></div>
+
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="{% url 'weather' %}" aria-label="DexTHER, home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M23 8.500C14.500 8.400 9 11.400 9 17.600c0 3.600 2.500 6 5.700 6 6.600 0 9.200-7.200 8.300-15.100Z"/></svg></span>
+        <span class="brand-text"><span class="brand-name">Dex<span class="brand-ther">THER</span></span><span class="brand-tagline">Whether you asked or not, Dex has the forecast.</span></span>
+      </a>
+      <div class="topbar-tools">
+        <div class="segmented" role="group" aria-label="Colour theme" id="theme-switch">
+          <button type="button" data-theme-choice="system" aria-pressed="false" title="Match system" aria-label="Match system theme"><svg viewBox="0 0 24 24"><rect x="3" y="4.500" width="18" height="12" rx="2.500"/><path d="M8 20h8M12 16.500V20"/></svg></button>
+          <button type="button" data-theme-choice="light" aria-pressed="false" title="Light" aria-label="Light theme"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.600 5.600 7 7M17 17l1.400 1.400M5.600 18.400 7 17M17 7l1.400-1.400"/></svg></button>
+          <button type="button" data-theme-choice="dark" aria-pressed="false" title="Dark" aria-label="Dark theme"><svg viewBox="0 0 24 24"><path d="M20 14.500A8.500 8.500 0 0 1 9.500 4 8.500 8.500 0 1 0 20 14.500Z"/></svg></button>
+        </div>
+        <button type="button" class="icon-btn" id="refresh-button" title="Refresh weather" aria-label="Refresh weather"><svg viewBox="0 0 24 24"><path d="M20 5v5h-5"/><path d="M19.400 10A7.500 7.500 0 1 0 20 13"/></svg></button>
+      </div>
+    </header>
+
+    <section class="controls" aria-label="Find a place">
+      <form class="search" id="search-form" method="get" action="{% url 'weather' %}" role="search">
+        <label class="sr-only" for="city-input">City</label>
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.500"/><path d="m16 16 4 4"/></svg>
+        <input id="city-input" type="search" name="city" value="{{ city_value }}" maxlength="80" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Search a city, e.g. Cebu or Paris, FR" required>
+        <button type="submit" class="btn-primary" id="search-button">Search</button>
+      </form>
+      <button type="button" class="btn-glass" id="location-button" aria-describedby="location-hint">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.500-5.600-6.500-11a6.500 6.500 0 0 1 13 0c0 5.400-6.500 11-6.500 11Z"/><circle cx="12" cy="10" r="2.300"/></svg>
+        <span id="location-label">Use my location</span>
+      </button>
+      <div class="segmented segmented-text" role="group" aria-label="Temperature units" id="unit-switch">
+        <button type="button" data-unit="metric" aria-pressed="{% if units == 'metric' %}true{% else %}false{% endif %}">°C</button>
+        <button type="button" data-unit="imperial" aria-pressed="{% if units == 'imperial' %}true{% else %}false{% endif %}">°F</button>
+      </div>
+      <span class="sr-only" id="location-hint">Looks up weather for your device's latitude and longitude. Your browser will ask for permission.</span>
+    </section>
+
+    <section class="recent" aria-label="Recent searches" id="recent" hidden>
+      <span class="recent-title">Recent</span>
+      <ul id="recent-list"></ul>
+      <button type="button" class="link-btn" id="clear-recent">Clear</button>
+    </section>
+
+    <main id="dashboard" tabindex="-1" aria-live="polite" aria-busy="false"
+          data-units="{{ units }}" data-city-value="{{ city_value }}">
+      {% if error %}
+      <section class="notice notice-error" role="alert">
+        <div class="notice-icon" aria-hidden="true">!</div>
+        <div>
+          <h2>{% if error_kind == "not_found" %}Location not found{% elif error_kind == "input" %}Check your search{% elif error_kind == "config" %}Weather service not set up{% elif error_kind == "auth" %}API key problem{% elif error_kind == "rate_limit" %}Too many requests{% else %}Weather unavailable{% endif %}</h2>
+          <p>{{ error }}</p>
+          <button type="button" class="btn-glass" data-action="retry">Try again</button>
+        </div>
+      </section>
+
+      {% elif report %}
+      {% with c=report.current loc=report.location u=report.unit_labels %}
+      {{ recent|json_script:"recent-data" }}
+
+      <div class="grid">
+        <article class="card hero" data-sky="{{ c.sky }}" data-night="{{ c.is_night|yesno:'true,false' }}" aria-labelledby="place-name">
+          <div class="hero-head">
+            <div>
+              <h1 id="place-name">{{ loc.label }}</h1>
+              <p class="local-time"><span id="city-date" data-offset="{{ loc.tz_offset }}">{{ c.observed_date }}</span> <span class="sep" aria-hidden="true">at</span> <strong id="city-time" data-offset="{{ loc.tz_offset }}">{{ c.observed_time }}</strong> <span class="muted">local time</span></p>
+            </div>
+            <span class="tag tag-observed" title="Conditions measured and reported by OpenWeather">Observed {{ c.observed_time }}</span>
+          </div>
+          <div class="hero-body">
+            <div class="hero-temp" aria-label="{{ c.temp }} degrees {{ u.temp }}">{{ c.temp }}<span class="deg">°</span></div>
+            <svg class="hero-icon" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-{{ c.icon }}"/></svg>
+          </div>
+          <p class="hero-desc">{{ c.description }}</p>
+          <p class="hero-sub">Feels like {{ c.feels_like }}{{ u.temp }}{% if report.daily %} <span class="sep" aria-hidden="true">·</span> High {{ report.daily.0.high }}° Low {{ report.daily.0.low }}°{% endif %}</p>
+          <p class="updated"><span id="updated-text" data-fetched="{{ report.current_fetched_at }}">Updated {{ report.current_fetched_at|slice:"11:16" }} UTC</span></p>
+        </article>
+
+        <section class="card metrics" aria-label="Current conditions">
+          <h2 class="card-title">Right now</h2>
+          <dl class="metric-grid">
+            <div class="metric"><dt>Feels like</dt><dd>{{ c.feels_like }}<small>{{ u.temp }}</small></dd></div>
+            <div class="metric"><dt>Humidity</dt><dd>{% if c.humidity is not None %}{{ c.humidity }}<small>%</small>{% else %}<span class="na">Not reported</span>{% endif %}</dd></div>
+            <div class="metric"><dt>Wind</dt><dd>{% if c.wind_speed %}{{ c.wind_speed }}<small> {{ u.speed }}{% if c.wind_dir %} {{ c.wind_dir }}{% endif %}</small>{% else %}<span class="na">Not reported</span>{% endif %}{% if c.wind_gust %}<span class="sub">Gusts {{ c.wind_gust }} {{ u.speed }}</span>{% endif %}</dd></div>
+            <div class="metric"><dt>Pressure</dt><dd>{% if c.pressure is not None %}{{ c.pressure }}<small> hPa</small>{% else %}<span class="na">Not reported</span>{% endif %}</dd></div>
+            <div class="metric"><dt>Visibility</dt><dd>{% if c.visibility %}{{ c.visibility }}<small> {{ u.distance }}</small>{% else %}<span class="na">Not reported</span>{% endif %}</dd></div>
+            <div class="metric"><dt>Cloud cover</dt><dd>{% if c.clouds is not None %}{{ c.clouds }}<small>%</small>{% else %}<span class="na">Not reported</span>{% endif %}</dd></div>
+            <div class="metric"><dt>Sunrise</dt><dd>{% if c.sunrise %}{{ c.sunrise }}{% else %}<span class="na">None today</span>{% endif %}</dd></div>
+            <div class="metric"><dt>Sunset</dt><dd>{% if c.sunset %}{{ c.sunset }}{% else %}<span class="na">None today</span>{% endif %}</dd></div>
+          </dl>
+        </section>
+      </div>
+
+      {% if report.forecast_error %}
+      <section class="notice notice-warn" role="status">
+        <div class="notice-icon" aria-hidden="true">!</div>
+        <div><h2>Forecast unavailable</h2><p>{{ report.forecast_error }} Current conditions above are still up to date.</p>
+        <button type="button" class="btn-glass" data-action="retry">Retry forecast</button></div>
+      </section>
+      {% else %}
+      <section class="card strip-card" aria-labelledby="hourly-title">
+        <div class="section-head"><h2 id="hourly-title">Next 24 hours</h2><span class="tag tag-forecast" title="Predicted by OpenWeather, not measured">Forecast</span></div>
+        <ul class="hourly" tabindex="0" aria-label="Hourly forecast, scrolls sideways">
+          {% for h in report.hourly %}
+          <li class="hour">
+            <span class="hour-time">{{ h.time }}{% if h.day %}<span class="hour-day">{{ h.day }}</span>{% endif %}</span>
+            <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#i-{{ h.icon }}"/></svg>
+            <strong>{{ h.temp }}°</strong>
+            <span class="hour-desc">{{ h.description }}</span>
+            {% if h.pop %}<span class="pop" title="Chance of precipitation">{{ h.pop }}% rain</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <section class="card" aria-labelledby="daily-title">
+        <div class="section-head"><h2 id="daily-title">5-day forecast</h2><span class="tag tag-forecast" title="Predicted by OpenWeather, not measured">Forecast</span></div>
+        <ul class="daily">
+          {% for d in report.daily %}
+          <li class="day">
+            <div class="day-name"><strong>{{ d.label }}</strong><span>{{ d.date }}</span></div>
+            <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#i-{{ d.icon }}"/></svg>
+            <span class="day-desc">{{ d.description }}</span>
+            <span class="pop">{% if d.pop %}{{ d.pop }}% rain{% else %}&nbsp;{% endif %}</span>
+            <span class="range" {% if d.partial %}title="Based on the {{ d.intervals }} forecast interval{{ d.intervals|pluralize }} available for this day"{% endif %}><strong>{{ d.high }}°</strong><span>{{ d.low }}°</span></span>
+          </li>
+          {% endfor %}
+        </ul>
+        <p class="fine">Highs and lows come from OpenWeather's 3-hour forecast intervals, so today and the last day can cover fewer hours.</p>
+      </section>
+      {% endif %}
+      {% endwith %}
+
+      {% else %}
+      <section class="notice notice-empty">
+        <div class="notice-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><use href="#i-02d"/></svg></div>
+        <div><h2>Where to?</h2><p>Search for a city, or use your location, to see current conditions and the days ahead.</p></div>
+      </section>
+      {% endif %}
+    </main>
+
+    <div class="loading" id="loading" hidden role="status">
+      <span class="spinner" aria-hidden="true"></span><span id="loading-text">Getting the latest weather…</span>
+    </div>
+
+    <footer class="footer">
+      <p class="credits">Developed by Jhon Grover Longsud and Allan Dexter P. Cuizon</p>
+      <p class="fine">Weather data from <a href="https://openweathermap.org/" rel="noopener noreferrer">OpenWeather</a>.</p>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <template id="tpl-offline">
+    <section class="notice notice-error" role="alert">
+      <div class="notice-icon" aria-hidden="true">!</div>
+      <div><h2>You appear to be offline</h2><p>The weather couldn't be loaded. Check your connection, then try again.</p>
+      <button type="button" class="btn-glass" data-action="retry">Try again</button></div>
+    </section>
+  </template>
+
+  <script src="{% static 'weather/app.js' %}" defer></script>
+</body>
+</html>
