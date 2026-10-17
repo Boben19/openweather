@@ -25,7 +25,9 @@
     <input type="text" name="city" placeholder="Enter city name" value="{{ city }}" />
     <button type="submit">Search</button>
   </form>
-<p><a href="{% url 'map' %}" class="map-btn">🌍 Open Weather Map</a></p>
+
+  <p><a href="{% url 'map' %}" class="map-btn">🌍 Open Weather Map</a></p>
+
   {% if weather.error %}
     <p class="error">{{ weather.error }}</p>
     {% if weather.details %}
