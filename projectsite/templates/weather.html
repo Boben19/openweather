@@ -2,42 +2,465 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Weather Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The End Weather</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: Arial, sans-serif; margin: 2em; text-align: center; }
-    img { max-width: 80%; border-radius: 10px; margin-top: 1em; }
-    .error { color: red; }
+    * { box-sizing: border-box; }
 
-    .map-btn {
-  display: inline-block;
-  padding: 8px 16px;
-  background: #2563eb;
-  color: white;
-  text-decoration: none;
-  border-radius: 6px;
-}
-.map-btn:hover { background: #1d4ed8; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding-bottom: 120px; /* keeps the card above the island */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      font-family: "Press Start 2P", "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.8;
+      color: #e8e0f0;
+      background: linear-gradient(#05030a, #1a0f2e);
+    }
+
+    /* twinkling stars (two layers) */
+    body::before, body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+        radial-gradient(2px 2px at 60px 120px, #d9b3ff, transparent),
+        radial-gradient(1px 1px at 120px 80px, #fff, transparent),
+        radial-gradient(2px 2px at 180px 160px, #fff, transparent);
+      background-size: 200px 200px;
+      animation: twinkle 3s ease-in-out infinite;
+    }
+    body::after {
+      background-size: 270px 270px;
+      background-position: 70px 40px;
+      animation-duration: 5s;
+      animation-delay: 1.5s;
+    }
+
+    /* ---------- shooting stars ---------- */
+    .shooting-star {
+      position: fixed;
+      top: var(--top);
+      left: var(--left);
+      width: 120px;
+      height: 2px;
+      background: linear-gradient(90deg, #fff, rgba(217, 179, 255, 0.6) 30%, transparent);
+      box-shadow: 0 0 8px #fff;
+      opacity: 0;
+      z-index: 0;
+      transform: rotate(-35deg);
+      animation: shoot var(--d) linear infinite;
+      animation-delay: var(--delay);
+    }
+
+    /* ---------- the whole island scene (bobs together) ---------- */
+    .scene {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 200px;
+      z-index: 1;
+      pointer-events: none;
+      animation: bob 6s ease-in-out infinite;
+    }
+
+    .island {
+      position: absolute;
+      left: 50%;
+      bottom: -30px;
+      width: 130%;
+      height: 180px;
+      transform: translateX(-50%);
+      background: linear-gradient(#e4e1a8 0%, #c9c68a 35%, #8f8c5c 100%);
+      clip-path: polygon(0 38%, 8% 30%, 20% 36%, 35% 28%, 50% 34%, 65% 27%, 80% 35%, 92% 29%, 100% 38%, 100% 100%, 0 100%);
+    }
+
+    /* ---------- obsidian towers + end crystals ---------- */
+    .tower {
+      position: absolute;
+      bottom: 80px;
+      width: 36px;
+      background:
+        repeating-linear-gradient(0deg, rgba(120, 70, 190, 0.3) 0 2px, transparent 2px 18px),
+        repeating-linear-gradient(90deg, rgba(120, 70, 190, 0.3) 0 2px, transparent 2px 18px),
+        #0f0818;
+      border: 2px solid #2a1745;
+      box-shadow: 0 0 14px rgba(150, 80, 230, 0.35);
+    }
+    .crystal {
+      position: absolute;
+      top: -34px;
+      left: calc(50% - 9px);
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, #ffb3ff, #ff4fd8);
+      border: 2px solid #ffd6ff;
+      box-shadow: 0 0 16px #ff4fd8, 0 0 30px rgba(255, 79, 216, 0.6);
+      animation: crystal 3s ease-in-out infinite;
+    }
+
+    /* ---------- exit portal (back to the overworld) ---------- */
+    .portal {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      width: 120px;
+      height: 30px;
+      margin-left: -60px;
+    }
+    .portal-beam {
+      position: absolute;
+      bottom: 24px;
+      left: 25px;
+      width: 70px;
+      height: 170px;
+      background: linear-gradient(to top, rgba(210, 140, 255, 0.55), transparent);
+      filter: blur(2px);
+      animation: beam 2.5s ease-in-out infinite;
+    }
+    .portal-surface {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      width: 92px;
+      height: 10px;
+      background: radial-gradient(ellipse at center, #b45cff 0%, #5a00b8 45%, #0a0020 100%);
+      box-shadow: 0 0 24px #a040ff, 0 0 50px rgba(160, 64, 255, 0.6);
+      animation: portal 3s ease-in-out infinite;
+    }
+    .portal-base {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 120px;
+      height: 14px;
+      background: repeating-linear-gradient(90deg, #3a3a3a 0 8px, #4b4b4b 8px 16px);
+      border: 2px solid #1e1e1e;
+    }
+    .portal-pillar {
+      position: absolute;
+      bottom: 14px;
+      width: 10px;
+      height: 30px;
+      background: repeating-linear-gradient(0deg, #3a3a3a 0 8px, #4b4b4b 8px 16px);
+      border: 2px solid #1e1e1e;
+    }
+    .portal-pillar.l { left: 0; }
+    .portal-pillar.r { right: 0; }
+    .torch {
+      position: absolute;
+      top: -12px;
+      left: 1px;
+      width: 4px;
+      height: 10px;
+      background: #7a4b1f;
+    }
+    .torch::before {
+      content: "";
+      position: absolute;
+      top: -6px;
+      left: -1px;
+      width: 6px;
+      height: 6px;
+      background: #ffcc33;
+      box-shadow: 0 0 10px #ffaa00, 0 0 20px rgba(255, 170, 0, 0.6);
+      animation: flicker 0.4s steps(2) infinite;
+    }
+
+    /* ---------- endermen (they teleport around) ---------- */
+    .enderman {
+      position: absolute;
+      bottom: 80px;
+      left: var(--a);
+      width: 16px;
+      height: 100px;
+      filter: drop-shadow(0 0 4px rgba(190, 90, 255, 0.7));
+      animation: teleport var(--t) linear infinite;
+      animation-delay: var(--delay);
+    }
+    .enderman > * { position: absolute; background: #0d0d12; }
+    .e-head { top: 0; left: 0; width: 16px; height: 16px; }
+    .e-body { top: 16px; left: 0; width: 16px; height: 24px; }
+    .e-arm {
+      top: 16px;
+      width: 4px;
+      height: 60px;
+      background: #14141b;
+      transform-origin: top center;
+      animation: sway 3s ease-in-out infinite;
+    }
+    .e-arm.l { left: -5px; }
+    .e-arm.r { left: 17px; animation-delay: -1.5s; }
+    .e-leg { top: 40px; width: 4px; height: 60px; background: #14141b; }
+    .e-leg.l { left: 2px; }
+    .e-leg.r { left: 10px; }
+    .eye {
+      position: absolute;
+      top: 9px;
+      width: 5px;
+      height: 2px;
+      background: #e060ff;
+      box-shadow: 0 0 6px #e060ff;
+    }
+    .eye.l { left: 2px; }
+    .eye.r { left: 9px; }
+
+    /* ---------- rising portal particles ---------- */
+    .particle {
+      position: fixed;
+      bottom: 0;
+      left: var(--x);
+      width: 8px;
+      height: 8px;
+      background: #c77dff;
+      box-shadow: 0 0 10px #c77dff;
+      opacity: 0;
+      z-index: 1;
+      animation: rise var(--d) linear infinite;
+      animation-delay: var(--delay);
+    }
+
+    /* ---------- the card ---------- */
+    .card {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 420px;
+      margin: 1em;
+      padding: 1.8em 1.4em;
+      text-align: center;
+      background: #170d24;
+      border: 4px solid;
+      border-color: #5b3d8a #0a0612 #0a0612 #5b3d8a;
+      animation: enter 0.8s ease-out both, glow 3s ease-in-out infinite 0.8s;
+    }
+
+    h1 {
+      margin: 0 0 1.2em;
+      font-size: 16px;
+      color: #d9a8ff;
+      text-shadow: 3px 3px 0 #3a1a5e;
+      animation: shimmer 2.5s ease-in-out infinite;
+    }
+
+    form { display: flex; gap: 8px; }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      padding: 10px;
+      font-family: inherit;
+      font-size: 11px;
+      color: #fff;
+      background: #000;
+      border: 2px solid #a0a0a0;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]:focus {
+      border-color: #fff;
+      box-shadow: 0 0 12px rgba(217, 168, 255, 0.7);
+    }
+    input[type="text"]::placeholder { color: #777; }
+
+    button, .map-btn {
+      font-family: inherit;
+      font-size: 11px;
+      color: #fff;
+      text-shadow: 2px 2px 0 #3e3e3e;
+      background: #7a7a7a;
+      border: 3px solid;
+      border-color: #c6c6c6 #3e3e3e #3e3e3e #c6c6c6;
+      padding: 10px 14px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.1s, background 0.2s;
+    }
+    button:hover, .map-btn:hover { background: #6d78c4; transform: translateY(-2px); }
+    button:active, .map-btn:active {
+      transform: translateY(2px);
+      border-color: #3e3e3e #c6c6c6 #c6c6c6 #3e3e3e;
+    }
+    .map-btn { display: inline-block; margin-top: 1.8em; }
+
+    .result { margin-top: 1.6em; animation: pop 0.6s ease-out both; }
+    .result h2 { margin: 0; font-size: 13px; color: #f3e6ff; }
+    .result img { image-rendering: pixelated; animation: float 3s ease-in-out infinite; }
+    .temp {
+      margin: 0;
+      font-size: 28px;
+      color: #ff9bff;
+      text-shadow: 3px 3px 0 #4a1a6e, 0 0 18px rgba(255, 120, 255, 0.7);
+    }
+    .desc { margin: 0.6em 0 0; color: #b9a8d0; font-size: 11px; }
+
+    .error {
+      margin-top: 1.6em;
+      color: #ff5555;
+      text-shadow: 2px 2px 0 #3a0000;
+      animation: shake 0.5s ease-out;
+    }
+    pre { white-space: pre-wrap; font-family: inherit; font-size: 8px; color: #8a7aa0; }
+
+    /* ---------- keyframes ---------- */
+    @keyframes twinkle { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes shoot {
+      0%   { opacity: 0; transform: rotate(-35deg) translateX(0); }
+      1%   { opacity: 1; }
+      7%   { opacity: 0; transform: rotate(-35deg) translateX(-600px); }
+      100% { opacity: 0; transform: rotate(-35deg) translateX(-600px); }
+    }
+    @keyframes crystal {
+      0%, 100% { transform: translateY(0) rotate(45deg); }
+      50% { transform: translateY(-8px) rotate(225deg); }
+    }
+    @keyframes beam { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    @keyframes portal {
+      0%, 100% { filter: hue-rotate(0deg) brightness(1); }
+      50% { filter: hue-rotate(35deg) brightness(1.4); }
+    }
+    @keyframes flicker {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.25, 0.8); }
+    }
+    @keyframes sway {
+      0%, 100% { transform: rotate(-4deg); }
+      50% { transform: rotate(4deg); }
+    }
+    @keyframes teleport {
+      0%    { left: var(--a); opacity: 1; }
+      38%   { left: var(--a); opacity: 1; }
+      40%   { left: var(--a); opacity: 0; }
+      40.1% { left: var(--b); opacity: 0; }
+      42%   { left: var(--b); opacity: 1; }
+      72%   { left: var(--b); opacity: 1; }
+      74%   { left: var(--b); opacity: 0; }
+      74.1% { left: var(--c); opacity: 0; }
+      76%   { left: var(--c); opacity: 1; }
+      92%   { left: var(--c); opacity: 1; }
+      94%   { left: var(--c); opacity: 0; }
+      94.1% { left: var(--a); opacity: 0; }
+      96%   { left: var(--a); opacity: 1; }
+      100%  { left: var(--a); opacity: 1; }
+    }
+    @keyframes rise {
+      0% { transform: translateY(0); opacity: 0; }
+      15% { opacity: 0.9; }
+      100% { transform: translateY(-100vh); opacity: 0; }
+    }
+    @keyframes enter {
+      from { opacity: 0; transform: translateY(40px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 25px rgba(170, 90, 255, 0.35); }
+      50% { box-shadow: 0 0 55px rgba(190, 110, 255, 0.75); }
+    }
+    @keyframes shimmer { 0%, 100% { color: #d9a8ff; } 50% { color: #ffffff; } }
+    @keyframes pop {
+      0% { opacity: 0; transform: scale(0.7); }
+      70% { transform: scale(1.06); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
   </style>
 </head>
 <body>
-  <h1>Weather Dashboard</h1>
-  <form method="get">
-    <input type="text" name="city" placeholder="Enter city name" value="{{ city }}" />
-    <button type="submit">Search</button>
-  </form>
+  <!-- shooting stars -->
+  <span class="shooting-star" style="--top: 6%;  --left: 88%; --d: 9s;  --delay: 1s;"></span>
+  <span class="shooting-star" style="--top: 14%; --left: 70%; --d: 12s; --delay: 5s;"></span>
+  <span class="shooting-star" style="--top: 4%;  --left: 62%; --d: 10s; --delay: 8s;"></span>
+  <span class="shooting-star" style="--top: 20%; --left: 95%; --d: 14s; --delay: 3s;"></span>
 
-  <p><a href="{% url 'map' %}" class="map-btn">🌍 Open Weather Map</a></p>
+  <!-- island scene -->
+  <div class="scene">
+    <div class="island"></div>
 
-  {% if weather.error %}
-    <p class="error">{{ weather.error }}</p>
-    {% if weather.details %}
-      <pre>{{ weather.details }}</pre>
+    <!-- obsidian towers -->
+    <div class="tower" style="left: 6%;  height: 170px;"><span class="crystal"></span></div>
+    <div class="tower" style="left: 15%; height: 120px; width: 30px;"></div>
+    <div class="tower" style="left: 88%; height: 150px;"><span class="crystal"></span></div>
+    <div class="tower" style="left: 95%; height: 105px; width: 30px;"></div>
+
+    <!-- exit portal -->
+    <div class="portal">
+      <div class="portal-beam"></div>
+      <div class="portal-surface"></div>
+      <div class="portal-base"></div>
+      <div class="portal-pillar l"><span class="torch"></span></div>
+      <div class="portal-pillar r"><span class="torch"></span></div>
+    </div>
+
+    <!-- endermen -->
+    <div class="enderman" style="--a: 25%; --b: 36%; --c: 72%; --t: 14s; --delay: 0s;">
+      <div class="e-head"><i class="eye l"></i><i class="eye r"></i></div>
+      <div class="e-body"></div>
+      <div class="e-arm l"></div><div class="e-arm r"></div>
+      <div class="e-leg l"></div><div class="e-leg r"></div>
+    </div>
+    <div class="enderman" style="--a: 80%; --b: 62%; --c: 22%; --t: 17s; --delay: -6s;">
+      <div class="e-head"><i class="eye l"></i><i class="eye r"></i></div>
+      <div class="e-body"></div>
+      <div class="e-arm l"></div><div class="e-arm r"></div>
+      <div class="e-leg l"></div><div class="e-leg r"></div>
+    </div>
+  </div>
+
+  <!-- portal particles -->
+  <span class="particle" style="--x: 8%;  --d: 7s;  --delay: 0s;"></span>
+  <span class="particle" style="--x: 18%; --d: 9s;  --delay: 2s;"></span>
+  <span class="particle" style="--x: 30%; --d: 6s;  --delay: 4s;"></span>
+  <span class="particle" style="--x: 42%; --d: 8s;  --delay: 1s;"></span>
+  <span class="particle" style="--x: 55%; --d: 10s; --delay: 3s;"></span>
+  <span class="particle" style="--x: 66%; --d: 7s;  --delay: 5s;"></span>
+  <span class="particle" style="--x: 78%; --d: 9s;  --delay: 0.5s;"></span>
+  <span class="particle" style="--x: 90%; --d: 6s;  --delay: 2.5s;"></span>
+
+  <div class="card">
+    <h1>THE END WEATHER</h1>
+
+    <form method="get">
+      <input type="text" name="city" placeholder="Enter city name" value="{{ city }}" />
+      <button type="submit">Search</button>
+    </form>
+
+    {% if weather.error %}
+      <p class="error">{{ weather.error }}</p>
+      {% if weather.details %}
+        <pre>{{ weather.details }}</pre>
+      {% endif %}
+    {% else %}
+      <div class="result">
+        <h2>{{ weather.city }}, {{ weather.country }}</h2>
+        <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="icon" />
+        <p class="temp">{{ weather.temp }}°C</p>
+        <p class="desc">{{ weather.description }}</p>
+      </div>
     {% endif %}
-  {% else %}
-    <h2>{{ weather.city }}, {{ weather.country }}</h2>
-    <p><img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="icon" /></p>
-    <p><strong>{{ weather.temp }} °C</strong></p>
-    <p>{{ weather.description }}</p>
-  {% endif %}
+
+    <a href="{% url 'map' %}" class="map-btn">🌍 Open Weather Map</a>
+  </div>
 </body>
 </html>

@@ -2,47 +2,157 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Weather Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The End Weather Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; }
-    #map { height: 100vh; width: 100%; }
+    :root { --mc-font: "Press Start 2P", "Courier New", monospace; }
+
+    body { margin: 0; font-family: var(--mc-font); background: #05030a; }
+    #map { height: 100vh; width: 100%; background: #05030a; }
+
+    /* Leaflet sets its own font, so override it everywhere */
+    .leaflet-container,
+    .leaflet-popup-content,
+    .leaflet-control,
+    .leaflet-control-attribution {
+      font-family: var(--mc-font) !important;
+    }
+
+    /* purple "ender" tint on the map tiles (delete this block for normal colors) */
+    .leaflet-tile-pane {
+      filter: invert(1) hue-rotate(250deg) brightness(0.75) contrast(0.95) saturate(0.7);
+    }
+
+    .leaflet-control-attribution {
+      font-size: 7px !important;
+      background: rgba(23, 13, 36, 0.85) !important;
+      color: #b9a8d0 !important;
+    }
+    .leaflet-control-attribution a { color: #d9a8ff !important; }
+
+    .leaflet-control-zoom a {
+      font-family: var(--mc-font) !important;
+      background: #7a7a7a !important;
+      color: #fff !important;
+      border: 3px solid !important;
+      border-color: #c6c6c6 #3e3e3e #3e3e3e #c6c6c6 !important;
+      border-radius: 0 !important;
+      text-shadow: 2px 2px 0 #3e3e3e;
+    }
+    .leaflet-control-zoom a:hover { background: #6d78c4 !important; }
+
+    /* popup */
+    .leaflet-popup-content-wrapper {
+      background: #170d24;
+      color: #e8e0f0;
+      border: 4px solid;
+      border-color: #5b3d8a #0a0612 #0a0612 #5b3d8a;
+      border-radius: 0;
+      box-shadow: 0 0 30px rgba(170, 90, 255, 0.6);
+    }
+    .leaflet-popup-tip { background: #170d24; }
+    .leaflet-popup-content { margin: 14px; font-size: 10px; line-height: 1.8; text-align: center; }
+    .leaflet-popup-close-button { color: #d9a8ff !important; font-family: var(--mc-font) !important; }
+
+    .pop-city { color: #f3e6ff; font-size: 11px; margin-bottom: 4px; }
+    .pop-temp { color: #ff9bff; font-size: 18px; text-shadow: 2px 2px 0 #4a1a6e; margin: 4px 0; }
+    .pop-desc { color: #b9a8d0; }
+    .pop-err { color: #ff5555; }
+    .pop-msg { color: #d9a8ff; }
+    .pop-icon { image-rendering: pixelated; animation: float 3s ease-in-out infinite; }
+
+    /* title banner + back button */
+    .banner {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      padding: 10px 14px;
+      font-size: 10px;
+      color: #d9a8ff;
+      text-align: center;
+      background: #170d24;
+      border: 3px solid;
+      border-color: #5b3d8a #0a0612 #0a0612 #5b3d8a;
+      box-shadow: 0 0 20px rgba(170, 90, 255, 0.5);
+      animation: slide-down 0.7s ease-out both;
+      pointer-events: none;
+    }
+    .banner small { display: block; margin-top: 4px; font-size: 7px; color: #8a7aa0; }
+
+    .back-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      padding: 10px 12px;
+      font-family: var(--mc-font);
+      font-size: 9px;
+      color: #fff;
+      text-decoration: none;
+      text-shadow: 2px 2px 0 #3e3e3e;
+      background: #7a7a7a;
+      border: 3px solid;
+      border-color: #c6c6c6 #3e3e3e #3e3e3e #c6c6c6;
+      transition: transform 0.1s, background 0.2s;
+    }
+    .back-btn:hover { background: #6d78c4; transform: translateY(-2px); }
+    .back-btn:active { transform: translateY(2px); border-color: #3e3e3e #c6c6c6 #c6c6c6 #3e3e3e; }
+
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    @keyframes slide-down {
+      from { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
-   <a href="{% url 'weather' %}" style="position:absolute; top:10px; right:10px; z-index:1000; padding:8px 16px; background:white; border-radius:6px; text-decoration:none; color:#111; box-shadow:0 1px 4px rgba(0,0,0,.3);">← Back to Dashboard</a>
+
+  <div class="banner">THE END MAP<small>Click anywhere to check the weather</small></div>
+  <a href="{% url 'weather' %}" class="back-btn">&larr; DASHBOARD</a>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const map = L.map("map").setView([12.8, 122], 5);
+    const map = L.map("map", { worldCopyJump: true }).setView([12.8, 122], 5);
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 18,
-  referrerPolicy: "origin",
-  attribution: "&copy; OpenStreetMap contributors",
-}).addTo(map);
+      maxZoom: 18,
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
 
     map.on("click", async (e) => {
       const { lat, lng } = e.latlng.wrap();
-      const popup = L.popup().setLatLng(e.latlng).setContent("Loading...").openOn(map);
+      const popup = L.popup({ maxWidth: 240 })
+        .setLatLng(e.latlng)
+        .setContent('<div class="pop-msg">Loading...</div>')
+        .openOn(map);
 
       try {
         const res = await fetch(`/api/weather/?lat=${lat}&lon=${lng}`);
         const data = await res.json();
 
         if (data.error) {
-  popup.setContent(`${data.error}<br><small>${data.details || ""}</small>`);
-  return;
-}
+          popup.setContent(`<div class="pop-err">${data.error}<br><small>${data.details || ""}</small></div>`);
+          return;
+        }
 
         popup.setContent(`
-          <strong>${data.city}, ${data.country}</strong><br>
-          <img src="https://openweathermap.org/img/wn/${data.icon}@2x.png" width="60"><br>
-          ${data.temp} °C<br>
-          ${data.description}
+          <div class="pop-city">${data.city}, ${data.country}</div>
+          <img class="pop-icon" src="https://openweathermap.org/img/wn/${data.icon}@2x.png" width="60">
+          <div class="pop-temp">${data.temp}°C</div>
+          <div class="pop-desc">${data.description}</div>
         `);
       } catch (err) {
-        popup.setContent("Could not load weather.");
+        popup.setContent('<div class="pop-err">Could not load weather.</div>');
       }
     });
   </script>
